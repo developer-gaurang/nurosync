@@ -46,6 +46,7 @@ export default function BioDashboard() {
 
   // ── REMOTE CONTROL STATE ──
   const [currentVehicleState, setCurrentVehicleState] = useState('HALT (S) [MANUAL OVERRIDE]');
+  const [inputValue, setInputValue] = useState('');
 
   // Using refs for high-frequency data
   const recordedSessionBufferRef = useRef([]);
@@ -53,6 +54,7 @@ export default function BioDashboard() {
   const terminalEndRef = useRef(null);
   const sampleCountRef = useRef(0);
   const isRecordingRef = useRef(false);
+  const inputRef = useRef(null);
   
   // ── ACTUATION REFS ──
   const lastBlinkTimeRef = useRef(0);
@@ -108,7 +110,7 @@ export default function BioDashboard() {
   useEffect(() => {
     if (!mounted) return;
     const triggerRemoteOverride = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || document.activeElement === inputRef.current) return;
       handleCommand(e.key);
     };
     
@@ -347,7 +349,7 @@ export default function BioDashboard() {
   // RENDER UI
   // ═══════════════════════════════════════════════════════════════
   return (
-    <div className="w-screen min-h-screen bg-[#000000] text-[#a1a1aa] font-[system-ui,sans-serif] flex flex-col">
+    <div className="w-screen min-h-screen bg-[#000000] text-[#a1a1aa] font-[system-ui,sans-serif] flex flex-col pb-20 overflow-y-auto">
       
       {/* HEADER */}
       <header className="h-[54px] min-h-[54px] border-b border-[#2e1065] bg-[#090514] flex justify-between items-center px-6">
@@ -410,32 +412,26 @@ export default function BioDashboard() {
                   <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[B Key]</span> ➔ Move Vehicle BACKWARD
                 </div>
               </div>
-              <div className="relative mt-2">
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const val = inputValue.trim().toUpperCase();
+                  if (['F', 'S', 'B'].includes(val)) {
+                    handleCommand(val);
+                  }
+                  setInputValue('');
+                }}
+                className="relative mt-2"
+              >
                 <input
+                  ref={inputRef}
                   type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Type directional command (F, S, B) and press Enter..."
                   className="w-full bg-[#02010a] border border-[#2e1065] rounded p-3 text-white text-xs font-mono placeholder-[#71717a] focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all"
-                  onChange={(e) => {
-                    const val = e.target.value.trim().toUpperCase();
-                    if (val.length > 0) {
-                      const lastChar = val[val.length - 1];
-                      if (['F', 'S', 'B'].includes(lastChar)) {
-                        handleCommand(lastChar);
-                        e.target.value = '';
-                      }
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const val = e.currentTarget.value.trim().toUpperCase();
-                      if (['F', 'S', 'B'].includes(val)) {
-                        handleCommand(val);
-                      }
-                      e.currentTarget.value = '';
-                    }
-                  }}
                 />
-              </div>
+              </form>
             </div>
           </div>
 
