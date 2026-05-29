@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Chart as ChartJS,
@@ -345,7 +347,7 @@ export default function BioDashboard() {
   // RENDER UI
   // ═══════════════════════════════════════════════════════════════
   return (
-    <div className="w-screen h-screen bg-[#000000] text-[#a1a1aa] font-[system-ui,sans-serif] flex flex-col overflow-hidden">
+    <div className="w-screen min-h-screen bg-[#000000] text-[#a1a1aa] font-[system-ui,sans-serif] flex flex-col">
       
       {/* HEADER */}
       <header className="h-[54px] min-h-[54px] border-b border-[#2e1065] bg-[#090514] flex justify-between items-center px-6">
@@ -366,10 +368,10 @@ export default function BioDashboard() {
       </header>
 
       {/* MAIN CONTENT STACK */}
-      <main className="flex-1 p-4 flex flex-col gap-4 overflow-hidden">
+      <main className="flex-1 p-4 flex flex-col gap-4">
         
         {/* TOP LAYER: Full Width Chart Wrapper */}
-        <div className="flex-1 bg-[#090514] border border-[#2e1065] rounded flex flex-col overflow-hidden relative shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+        <div className="w-full bg-[#090514] border border-[#2e1065] rounded flex flex-col relative shadow-[0_0_15px_rgba(168,85,247,0.05)]">
           <div className="flex justify-between items-center p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)]">
             <span className="text-[#a855f7] text-[10px] font-bold tracking-widest">◆ LIVE BIO-SIGNAL STREAM</span>
             <button 
@@ -379,7 +381,7 @@ export default function BioDashboard() {
               ● REC
             </button>
           </div>
-          <div className="flex-1 relative w-full h-full min-h-0 p-4 pb-1">
+          <div className="relative w-full h-[260px] min-h-[260px] p-4 pb-1">
             <Line data={chartData} options={chartOptions} />
           </div>
           <div className="p-2 border-t border-[#2e1065] text-[9px] font-bold tracking-widest text-[#a855f7] flex justify-between bg-black">
@@ -389,153 +391,152 @@ export default function BioDashboard() {
         </div>
 
         {/* BOTTOM LAYER: 3-Column Multi-Panel Row */}
-        <div className="flex-1 min-h-[auto] grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4">
           
-          {/* Column 1: Keyboard Remote + Terminal */}
+          {/* Column 1: Keyboard Remote Control Override */}
+          <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+            <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)]">
+              <span className="text-[#a855f7] text-[10px] font-bold tracking-widest">🎮 KEYBOARD REMOTE CONTROL OVERRIDE</span>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              <div className="flex flex-col gap-2 font-mono text-[11px] text-[#71717a]">
+                <div className="flex items-center gap-2">
+                  <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[F Key]</span> ➔ Move Vehicle FORWARD
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[S Key]</span> ➔ HALT / EMERGENCY STOP
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[B Key]</span> ➔ Move Vehicle BACKWARD
+                </div>
+              </div>
+              <div className="relative mt-2">
+                <input
+                  type="text"
+                  placeholder="Type directional command (F, S, B) and press Enter..."
+                  className="w-full bg-[#02010a] border border-[#2e1065] rounded p-3 text-white text-xs font-mono placeholder-[#71717a] focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all"
+                  onChange={(e) => {
+                    const val = e.target.value.trim().toUpperCase();
+                    if (val.length > 0) {
+                      const lastChar = val[val.length - 1];
+                      if (['F', 'S', 'B'].includes(lastChar)) {
+                        handleCommand(lastChar);
+                        e.target.value = '';
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = e.currentTarget.value.trim().toUpperCase();
+                      if (['F', 'S', 'B'].includes(val)) {
+                        handleCommand(val);
+                      }
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: System Terminal Log */}
+          <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+            <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)] flex justify-between">
+              <span className="text-white text-[10px] font-bold tracking-widest">◆ SYSTEM TERMINAL LOG</span>
+              <span className="text-[#c084fc] animate-pulse text-[10px] font-bold">LIVE</span>
+            </div>
+            <div className="p-3 overflow-y-auto text-[10px] font-mono leading-relaxed bg-black space-y-1 min-h-[160px] max-h-[220px]">
+              {terminalLogs.map((log, i) => (
+                <div key={i} className={`${log.type === 'error' ? 'text-red-500' : log.type === 'success' ? 'text-[#a855f7]' : log.type === 'warning' ? 'text-amber-500' : 'text-[#c084fc]'}`}>
+                  {log.msg}
+                </div>
+              ))}
+              <div ref={terminalEndRef} />
+            </div>
+          </div>
+
+          {/* Column 3: Diagnostic Matrix & Dual-AI Verification Archive */}
           <div className="flex flex-col gap-4">
-            {/* Panel: Keyboard Remote Control Override */}
+            {/* Panel: Stroke Assist Diagnostic Matrix */}
             <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)]">
               <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)]">
-                <span className="text-[#a855f7] text-[10px] font-bold tracking-widest">🎮 KEYBOARD REMOTE CONTROL OVERRIDE</span>
+                <span className="text-[#c084fc] text-[10px] font-bold tracking-widest">◆ STROKE ASSIST DIAGNOSTIC MATRIX</span>
               </div>
-              <div className="p-4 flex flex-col gap-4">
-                <div className="flex flex-col gap-2 font-mono text-[11px] text-[#71717a]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[F Key]</span> ➔ Move Vehicle FORWARD
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[S Key]</span> ➔ HALT / EMERGENCY STOP
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white bg-[#2e1065] px-2 py-1 rounded w-16 text-center">[B Key]</span> ➔ Move Vehicle BACKWARD
+              <div className="p-4 grid grid-cols-2 gap-3">
+                <div className="bg-black p-3 border border-[#2e1065] rounded">
+                  <div className="text-[9px] font-bold text-[#71717a] tracking-wider mb-1">HEMISPHERIC ASYMMETRY</div>
+                  <div className="text-lg font-bold text-white">{asymmetryIndex}%</div>
+                </div>
+                <div className="bg-black p-3 border border-[#2e1065] rounded">
+                  <div className="text-[9px] font-bold text-[#71717a] tracking-wider mb-1">OCULAR FATIGUE RATE</div>
+                  <div className="text-lg font-bold text-white">{fatigueRate}/hr</div>
+                </div>
+                <div className="bg-black p-3 border border-[#2e1065] rounded">
+                  <div className="text-[9px] font-bold text-[#71717a] tracking-wider mb-1">BUFFER CAPACITY</div>
+                  <div className="text-lg font-bold text-[#a855f7]">{dataBufferRef.current.length}/500</div>
+                </div>
+                <div className="bg-black p-3 border border-[#2e1065] rounded">
+                  <div className="text-[9px] font-bold text-[#71717a] tracking-wider mb-1">CRITICAL BREACHES</div>
+                  <div className="text-lg font-bold text-red-500">
+                    {terminalLogs.filter(l => l.msg.includes('[CRITICAL]')).length}
                   </div>
                 </div>
-                <div className="relative mt-2">
-                  <input
-                    type="text"
-                    placeholder="Type directional command (F, S, B) and press Enter..."
-                    className="w-full bg-[#02010a] border border-[#2e1065] rounded p-3 text-white text-xs font-mono placeholder-[#71717a] focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all"
-                    onChange={(e) => {
-                      const val = e.target.value.trim().toUpperCase();
-                      if (val.length > 0) {
-                        const lastChar = val[val.length - 1];
-                        if (['F', 'S', 'B'].includes(lastChar)) {
-                          handleCommand(lastChar);
-                          e.target.value = '';
-                        }
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const val = e.currentTarget.value.trim().toUpperCase();
-                        if (['F', 'S', 'B'].includes(val)) {
-                          handleCommand(val);
-                        }
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                  />
+                <div className="bg-black p-3 border border-[#2e1065] rounded col-span-2">
+                  <div className="text-[9px] font-bold text-[#71717a] tracking-wider mb-1">VEHICLE STATE</div>
+                  <div className={`text-xs font-bold mt-0.5 ${currentVehicleState.includes('HALT') ? 'text-red-500' : 'text-green-500'}`}>
+                    {currentVehicleState}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Panel A: Terminal */}
-            <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)] flex-1 min-h-[14rem]">
-              <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)] flex justify-between">
-                <span className="text-white text-[10px] font-bold tracking-widest">◆ SYSTEM TERMINAL LOG</span>
-                <span className="text-[#c084fc] animate-pulse text-[10px] font-bold">LIVE</span>
+            {/* Panel: Dual-AI Verification Archive */}
+            <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)]">
+              <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)]">
+                <span className="text-white text-[10px] font-bold tracking-widest">◆ DUAL-AI VERIFICATION ARCHIVE</span>
               </div>
-              <div className="flex-1 p-3 overflow-y-auto text-[10px] font-mono leading-relaxed bg-black space-y-1">
-                {terminalLogs.map((log, i) => (
-                  <div key={i} className={`${log.type === 'error' ? 'text-red-500' : log.type === 'success' ? 'text-[#a855f7]' : log.type === 'warning' ? 'text-amber-500' : 'text-[#c084fc]'}`}>
-                    {log.msg}
-                  </div>
-                ))}
-                <div ref={terminalEndRef} />
-              </div>
-            </div>
-          </div>
+              <div className="p-4 flex flex-col gap-3">
+                <button 
+                  onClick={generateAIReport}
+                  disabled={aiReportStatus === 'processing'}
+                  className="w-full py-2.5 border border-[#a855f7] text-[#a855f7] text-[10px] font-bold tracking-[2px] rounded hover:bg-[#a855f7] hover:text-black transition-all disabled:opacity-50"
+                >
+                  {aiReportStatus === 'processing' ? 'PROCESSING NEURAL PIPELINE...' : 'GENERATE VERIFIED HEALTH REPORT'}
+                </button>
 
-          {/* Column 2: Diagnostic Matrix */}
-          <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)] min-h-[24rem]">
-            <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)]">
-              <span className="text-[#c084fc] text-[10px] font-bold tracking-widest">◆ STROKE ASSIST DIAGNOSTIC MATRIX</span>
-            </div>
-            <div className="flex-1 p-4 grid grid-cols-1 gap-4 overflow-y-auto content-start">
-              <div className="bg-black p-4 border border-[#2e1065] rounded">
-                <div className="text-xs font-bold text-[#71717a] tracking-wider mb-2">HEMISPHERIC ASYMMETRY</div>
-                <div className="text-2xl font-bold text-white">{asymmetryIndex}%</div>
-              </div>
-              <div className="bg-black p-4 border border-[#2e1065] rounded">
-                <div className="text-xs font-bold text-[#71717a] tracking-wider mb-2">OCULAR FATIGUE RATE</div>
-                <div className="text-2xl font-bold text-white">{fatigueRate}/hr</div>
-              </div>
-              <div className="bg-black p-4 border border-[#2e1065] rounded">
-                <div className="text-xs font-bold text-[#71717a] tracking-wider mb-2">BUFFER CAPACITY</div>
-                <div className="text-2xl font-bold text-[#a855f7]">{dataBufferRef.current.length}/500</div>
-              </div>
-              <div className="bg-black p-4 border border-[#2e1065] rounded">
-                <div className="text-xs font-bold text-[#71717a] tracking-wider mb-2">CRITICAL BREACHES</div>
-                <div className="text-2xl font-bold text-red-500">
-                  {terminalLogs.filter(l => l.msg.includes('[CRITICAL]')).length}
-                </div>
-              </div>
-              <div className="bg-black p-4 border border-[#2e1065] rounded">
-                <div className="text-xs font-bold text-[#71717a] tracking-wider mb-2">VEHICLE STATE</div>
-                <div className={`text-sm font-bold mt-1 ${currentVehicleState.includes('HALT') ? 'text-red-500' : 'text-green-500'}`}>
-                  {currentVehicleState}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Column 3: Dual-AI Verification Archive */}
-          <div className="bg-[#090514] border border-[#2e1065] rounded flex flex-col shadow-[0_0_15px_rgba(168,85,247,0.05)] min-h-[24rem]">
-            <div className="p-3 border-b border-[#2e1065] bg-[rgba(255,255,255,0.02)]">
-              <span className="text-white text-[10px] font-bold tracking-widest">◆ DUAL-AI VERIFICATION ARCHIVE</span>
-            </div>
-            
-            <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto">
-              <button 
-                onClick={generateAIReport}
-                disabled={aiReportStatus === 'processing'}
-                className="w-full py-4 border border-[#a855f7] text-[#a855f7] text-xs font-bold tracking-[2px] rounded hover:bg-[#a855f7] hover:text-black transition-all disabled:opacity-50 flex-shrink-0"
-              >
-                {aiReportStatus === 'processing' ? 'PROCESSING NEURAL PIPELINE...' : 'GENERATE VERIFIED HEALTH REPORT'}
-              </button>
-
-              {aiReportStatus === 'complete' && aiConsensus && (
-                <div className="flex-1 border border-[#2e1065] bg-black p-5 rounded overflow-y-auto space-y-5">
-                  <div className="text-center pb-3 border-b border-[#2e1065]">
-                    <h3 className="font-bold text-white text-sm tracking-widest mb-1">CLINICAL CONSENSUS LEDGER</h3>
-                    <div className="text-xs text-[#71717a]">CAPTURED PEAK: {aiConsensus.peakValue}μV</div>
-                  </div>
-                  
-                  <div className="space-y-4 text-xs">
-                    <div className="p-3 border border-[#2e1065] rounded bg-[#090514]">
-                      <div className="font-bold text-[#a855f7] mb-2 tracking-wide">AGENT 1: WAVEFORM MORPHOLOGY</div>
-                      <div className={aiConsensus.agent1.passed ? 'text-green-400' : 'text-red-400'}>
-                        {aiConsensus.agent1.verdict}
-                      </div>
+                {aiReportStatus === 'complete' && aiConsensus && (
+                  <div className="border border-[#2e1065] bg-black p-4 rounded space-y-4 max-h-[160px] overflow-y-auto">
+                    <div className="text-center pb-2 border-b border-[#2e1065]">
+                      <h4 className="font-bold text-white text-[10px] tracking-widest mb-0.5">CLINICAL CONSENSUS LEDGER</h4>
+                      <div className="text-[9px] text-[#71717a]">CAPTURED PEAK: {aiConsensus.peakValue}μV</div>
                     </div>
                     
-                    <div className="p-3 border border-[#2e1065] rounded bg-[#090514]">
-                      <div className="font-bold text-[#a855f7] mb-2 tracking-wide">AGENT 2: NEUROLOGICAL BASELINE</div>
-                      <div className={aiConsensus.agent2.passed ? 'text-green-400' : 'text-red-400'}>
-                        {aiConsensus.agent2.verdict}
+                    <div className="space-y-3 text-[10px]">
+                      <div className="p-2 border border-[#2e1065] rounded bg-[#090514]">
+                        <div className="font-bold text-[#a855f7] mb-1 tracking-wide">AGENT 1: WAVEFORM MORPHOLOGY</div>
+                        <div className={aiConsensus.agent1.passed ? 'text-green-400' : 'text-red-400'}>
+                          {aiConsensus.agent1.verdict}
+                        </div>
+                      </div>
+                      
+                      <div className="p-2 border border-[#2e1065] rounded bg-[#090514]">
+                        <div className="font-bold text-[#a855f7] mb-1 tracking-wide">AGENT 2: NEUROLOGICAL BASELINE</div>
+                        <div className={aiConsensus.agent2.passed ? 'text-green-400' : 'text-red-400'}>
+                          {aiConsensus.agent2.verdict}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className={`mt-6 p-4 text-center border font-bold tracking-widest rounded text-base ${
-                    aiConsensus.finalVerdict === 'VALIDATED' 
-                      ? 'border-green-500 text-green-500 bg-[rgba(34,197,94,0.1)]' 
-                      : 'border-red-500 text-red-500 bg-[rgba(239,68,68,0.1)]'
-                  }`}>
-                    VERDICT: {aiConsensus.finalVerdict}
+                    <div className={`p-2.5 text-center border font-bold tracking-widest rounded text-xs ${
+                      aiConsensus.finalVerdict === 'VALIDATED' 
+                        ? 'border-green-500 text-green-500 bg-[rgba(34,197,94,0.1)]' 
+                        : 'border-red-500 text-red-500 bg-[rgba(239,68,68,0.1)]'
+                    }`}>
+                      VERDICT: {aiConsensus.finalVerdict}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
